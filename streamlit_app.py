@@ -1,56 +1,56 @@
-import streamlit as st # type: ignore
+import streamlit as st
+import random
 
-# Initialize session state for board and player
+st.set_page_config(page_title="Tic Tac Toe", layout="centered")
+
+# Initialize session state
 if "board" not in st.session_state:
-    st.session_state.board = [['.' for _ in range(3)] for _ in range(3)]
-if "current_player" not in st.session_state:
-    st.session_state.current_player = 'X'
-if "game_over" not in st.session_state:
-    st.session_state.game_over = False
-if "winner" not in st.session_state:
-    st.session_state.winner = None
+    st.session_state.board = ["."] * 9
+    st.session_state.current_player = "X"
+    st.session_state.mode = st.radio("Choose Mode", ["2P", "AI"])
 
-def check_win(board):
-    for i in range(3):
-        if board[i][0] == board[i][1] == board[i][2] != '.':
-            return board[i][0]
-        if board[0][i] == board[1][i] == board[2][i] != '.':
-            return board[0][i]
-    if board[0][0] == board[1][1] == board[2][2] != '.':
-        return board[0][0]
-    if board[0][2] == board[1][1] == board[2][0] != '.':
-        return board[0][2]
-    for row in board:
-        if '.' in row:
-            return None
-    return 'Tie'
+def check_winner(board):
+    wins = [(0,1,2), (3,4,5), (6,7,8),
+            (0,3,6), (1,4,7), (2,5,8),
+            (0,4,8), (2,4,6)]
+    for a,b,c in wins:
+        if board[a] == board[b] == board[c] != ".":
+            return board[a]
+    if "." not in board:
+        return "Tie"
+    return None
+
+def ai_move():
+    available = [i for i, val in enumerate(st.session_state.board) if val == "."]
+    if available:
+        move = random.choice(available)
+        st.session_state.board[move] = "O"
+        st.session_state.current_player = "X"
+
+def make_move(i):
+    if st.session_state.board[i] == ".":
+        st.session_state.board[i] = st.session_state.current_player
+        winner = check_winner(st.session_state.board)
+        if winner:
+            st.success(f"{'Player' if winner in ['X','O'] else ''} {winner} wins!" if winner != "Tie" else "It's a tie!")
+            st.button("Play Again", on_click=reset_game)
+            return
+        if st.session_state.mode == "AI" and st.session_state.current_player == "X":
+            st.session_state.current_player = "O"
+            ai_move()
+        else:
+            st.session_state.current_player = "O" if st.session_state.current_player == "X" else "X"
 
 def reset_game():
-    st.session_state.board = [['.' for _ in range(3)] for _ in range(3)]
-    st.session_state.current_player = 'X'
-    st.session_state.game_over = False
-    st.session_state.winner = None
+    st.session_state.board = ["."] * 9
+    st.session_state.current_player = "X"
 
-st.title("Tic Tac Toe - Streamlit Edition")
+# Draw board
+st.title("Tic Tac Toe")
 
-if st.session_state.game_over:
-    if st.session_state.winner == 'Tie':
-        st.success("It's a Tie!")
+cols = st.columns(3)
+for i in range(9):
+    if st.session_state.board[i] == ".":
+        cols[i % 3].button(" ", key=i, on_click=make_move, args=(i,), help="Click to play")
     else:
-        st.success(f"Player {st.session_state.winner} Wins! 🎉")
-    if st.button("Play Again"):
-        reset_game()
-else:
-    for r in range(3):
-        cols = st.columns(3)
-        for c in range(3):
-            btn_label = st.session_state.board[r][c] if st.session_state.board[r][c] != '.' else " "
-            if cols[c].button(btn_label, key=f"{r}-{c}", disabled=st.session_state.board[r][c] != '.' or st.session_state.game_over):
-                st.session_state.board[r][c] = st.session_state.current_player
-                winner = check_win(st.session_state.board)
-                if winner:
-                    st.session_state.winner = winner
-                    st.session_state.game_over = True
-                else:
-                    st.session_state.current_player = 'O' if st.session_state.current_player == 'X' else 'X'
-                st.experimental_rerun()
+        cols[i % 3].write(f"### {st.session_state.board[i]}")
