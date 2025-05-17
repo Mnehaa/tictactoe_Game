@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+import time
 
 st.set_page_config(page_title="Tic Tac Toe", layout="centered")
 
@@ -41,6 +42,8 @@ def check_winner(board):
     return None
 
 def ai_move():
+    time.sleep(1.5)  # Pause for 1.5 seconds to simulate AI thinking
+
     available = [i for i, val in enumerate(st.session_state.board) if val == "."]
     if available:
         move = random.choice(available)
